@@ -25,7 +25,17 @@
                 :key="item.id"
                 :label="item.name"
                 :value="item.id"
-              />
+              >
+                <span class="float-left">{{ item.name }}</span>
+                <el-tag
+                  v-if="item.isRestricted"
+                  type="danger"
+                  size="small"
+                  class="float-right mt-5px"
+                >
+                  限用
+                </el-tag>
+              </el-option>
             </el-select>
           </el-form-item>
         </template>
@@ -48,6 +58,57 @@
         <template #default="{ row }">
           <el-form-item class="mb-0px!">
             <el-input disabled v-model="row.productUnitName" />
+          </el-form-item>
+        </template>
+      </el-table-column>
+      <el-table-column label="生产批次" min-width="150">
+        <template #default="{ row, $index }">
+          <el-form-item :prop="`${$index}.batchNo`" class="mb-0px!">
+            <el-select
+              v-model="row.batchNo"
+              clearable
+              filterable
+              placeholder="选择批次"
+              @change="onChangeBatch($event, row)"
+            >
+              <el-option
+                v-for="batch in batchList[row.productId] || []"
+                :key="batch.batchNo"
+                :label="batch.batchNo"
+                :value="batch.batchNo"
+              >
+                <span style="float: left">{{ batch.batchNo }}</span>
+                <span style="float: right; color: #8492a6; font-size: 13px; margin-left: 10px">
+                  {{ dayjs(batch.expiryDate).format('YYYY-MM-DD') }}
+                </span>
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </template>
+      </el-table-column>
+      <el-table-column label="生产日期" min-width="150">
+        <template #default="{ row, $index }">
+          <el-form-item :prop="`${$index}.productionDate`" class="mb-0px!">
+            <el-date-picker
+              v-model="row.productionDate"
+              type="date"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              placeholder="选择日期"
+              class="!w-100%"
+            />
+          </el-form-item>
+        </template>
+      </el-table-column>
+      <el-table-column label="有效期至" min-width="150">
+        <template #default="{ row, $index }">
+          <el-form-item :prop="`${$index}.expiryDate`" class="mb-0px!">
+            <el-date-picker
+              v-model="row.expiryDate"
+              type="date"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              placeholder="选择有效期"
+              class="!w-100%"
+            />
           </el-form-item>
         </template>
       </el-table-column>
@@ -104,9 +165,7 @@
       <el-table-column label="税额" prop="taxPrice" fixed="right" min-width="120">
         <template #default="{ row, $index }">
           <el-form-item :prop="`${$index}.taxPrice`" class="mb-0px!">
-            <el-form-item :prop="`${$index}.taxPrice`" class="mb-0px!">
-              <el-input disabled v-model="row.taxPrice" :formatter="erpPriceInputFormatter" />
-            </el-form-item>
+            <el-input disabled v-model="row.taxPrice" :formatter="erpPriceInputFormatter" />
           </el-form-item>
         </template>
       </el-table-column>
@@ -144,6 +203,7 @@ import {
   erpPriceMultiply,
   getSumValue
 } from '@/utils'
+import dayjs from 'dayjs'
 
 const props = defineProps<{
   items: undefined
@@ -157,6 +217,7 @@ const formRules = reactive({
 })
 const formRef = ref([]) // 表单 Ref
 const productList = ref<ProductVO[]>([]) // 产品列表
+const batchList = ref<Record<number, any[]>>({}) // 批次列表，Key 为产品编号
 
 /** 初始化设置出库项 */
 watch(
@@ -189,7 +250,7 @@ watch(
 )
 
 /** 合计 */
-const getSummaries = (param: SummaryMethodProps) => {
+const getSummaries = (param: any) => {
   const { columns, data } = param
   const sums: string[] = []
   columns.forEach((column, index: number) => {
@@ -223,6 +284,9 @@ const handleAdd = () => {
     taxPercent: undefined,
     taxPrice: undefined,
     totalPrice: undefined,
+    batchNo: undefined,
+    productionDate: undefined,
+    expiryDate: undefined,
     remark: undefined
   }
   formData.value.push(row)
@@ -241,8 +305,32 @@ const onChangeProduct = (productId, row) => {
     row.productBarCode = product.barCode
     row.productPrice = product.salePrice
   }
+  // 置空批次
+  row.batchNo = undefined
+  row.productionDate = undefined
+  row.expiryDate = undefined
   // 加载库存
   setStockCount(row)
+  // 加载批次
+  fetchBatches(productId)
+}
+
+/** 异步加载产品的批次列表 */
+const fetchBatches = async (productId: number) => {
+  if (!productId || batchList.value[productId]) return
+  const data = await StockApi.getStockList({ productId })
+  batchList.value[productId] = data
+}
+
+/** 处理批次变更 */
+const onChangeBatch = (batchNo, row) => {
+  const batches = batchList.value[row.productId]
+  if (!batches) return
+  const batch = batches.find((b) => b.batchNo === batchNo)
+  if (batch) {
+    row.productionDate = batch.productionDate
+    row.expiryDate = batch.expiryDate
+  }
 }
 
 /** 加载库存 */
@@ -254,11 +342,19 @@ const setStockCount = async (row: any) => {
   row.stockCount = count || 0
 }
 
+/** 判断是否存在高毒限用产品 */
+const hasRestrictedItem = computed(() => {
+  return formData.value.some((item) => {
+    const product = productList.value.find((p) => p.id === item.productId)
+    return product?.isRestricted
+  })
+})
+
 /** 表单校验 */
 const validate = () => {
   return formRef.value.validate()
 }
-defineExpose({ validate })
+defineExpose({ validate, hasRestrictedItem })
 
 /** 初始化 */
 onMounted(async () => {

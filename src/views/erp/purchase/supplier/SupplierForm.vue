@@ -93,6 +93,30 @@
           </el-form-item>
         </el-col>
         <el-col :span="24">
+          <el-divider content-position="left">农资资质信息</el-divider>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="经营许可证" prop="businessLicenseNo">
+            <el-input v-model="formData.businessLicenseNo" placeholder="请输入经营许可证号" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="资质有效期" prop="licenseExpiryDate">
+            <el-date-picker
+              v-model="formData.licenseExpiryDate"
+              type="date"
+              value-format="x"
+              placeholder="选择有效期"
+              class="!w-1/1"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
+          <el-form-item label="资质附件" prop="licenseFileUrl">
+            <UploadFile v-model="formData.licenseFileUrl" :limit="1" :is-show-tip="false" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
           <el-form-item label="备注" prop="remark">
             <el-input type="textarea" v-model="formData.remark" placeholder="请输入备注" />
           </el-form-item>
@@ -135,7 +159,10 @@ const formData = ref({
   taxPercent: undefined,
   bankName: undefined,
   bankAccount: undefined,
-  bankAddress: undefined
+  bankAddress: undefined,
+  businessLicenseNo: undefined,
+  licenseExpiryDate: undefined,
+  licenseFileUrl: undefined
 })
 const formRules = reactive({
   name: [{ required: true, message: '名称不能为空', trigger: 'blur' }],
@@ -203,7 +230,10 @@ const resetForm = () => {
     taxPercent: undefined,
     bankName: undefined,
     bankAccount: undefined,
-    bankAddress: undefined
+    bankAddress: undefined,
+    businessLicenseNo: undefined,
+    licenseExpiryDate: undefined,
+    licenseFileUrl: undefined
   }
   formRef.value?.resetFields()
 }

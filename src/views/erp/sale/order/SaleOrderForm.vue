@@ -42,6 +42,21 @@
               />
             </el-select>
           </el-form-item>
+          <!-- 农资授信状态提示 -->
+          <div v-if="selectedCustomer && selectedCustomer.creditLimit > 0" class="mt--10px mb-10px">
+            <el-alert
+              :title="`该客户授信额度: ¥${selectedCustomer.creditLimit} | 当前欠款: ¥${selectedCustomer.currentDebt || 0}`"
+              :type="isOverCredit ? 'error' : 'warning'"
+              show-icon
+              :closable="false"
+            >
+              <template #default>
+                <div v-if="isOverCredit" class="font-bold ml-1">
+                  本次交易金额: ¥{{ formData.totalPrice }}。加上现有欠款将超出授信额度！
+                </div>
+              </template>
+            </el-alert>
+          </div>
         </el-col>
         <el-col :span="8">
           <el-form-item label="销售人员" prop="saleUserId">
@@ -61,6 +76,34 @@
             </el-select>
           </el-form-item>
         </el-col>
+        <el-col :span="24">
+          <el-divider content-position="left">农资处方与合规</el-divider>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="用途/对象" prop="usageIntent">
+            <el-input v-model="formData.usageIntent" placeholder="请输入防治对象" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="施用方法" prop="usageMethod">
+            <el-input v-model="formData.usageMethod" placeholder="请输入施用方法" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="建议用量" prop="dosageAdvice">
+            <el-input v-model="formData.dosageAdvice" placeholder="请输入建议用量" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="购药人身份证" prop="buyerIdCard">
+            <el-input v-model="formData.buyerIdCard" placeholder="高毒农药必填" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="联通摄像头" prop="cameraId">
+            <el-input v-model="formData.cameraId" placeholder="监控设备 ID (如: counters_01)" />
+          </el-form-item>
+        </el-col>
         <el-col :span="16">
           <el-form-item label="备注" prop="remark">
             <el-input
@@ -69,11 +112,6 @@
               :rows="1"
               placeholder="请输入备注"
             />
-          </el-form-item>
-        </el-col>
-        <el-col :span="8">
-          <el-form-item label="附件" prop="fileUrl">
-            <UploadFile :is-show-tip="false" v-model="formData.fileUrl" :limit="1" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -182,18 +220,43 @@ const formData = ref({
   discountPrice: 0,
   totalPrice: 0,
   depositPrice: 0,
+  usageIntent: undefined,
+  usageMethod: undefined,
+  dosageAdvice: undefined,
+  buyerIdCard: undefined,
+  cameraId: undefined,
   items: [],
   no: undefined // 订单单号，后端返回
 })
 const formRules = reactive({
   customerId: [{ required: true, message: '客户不能为空', trigger: 'blur' }],
-  orderTime: [{ required: true, message: '订单时间不能为空', trigger: 'blur' }]
+  orderTime: [{ required: true, message: '订单时间不能为空', trigger: 'blur' }],
+  buyerIdCard: [
+    {
+      validator: (_rule, value, callback) => {
+        if (itemFormRef.value?.hasRestrictedItem && !value) {
+          callback(new Error('销售包含高毒/限用农资，必须录入购药人身份证号'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
 })
 const disabled = computed(() => formType.value === 'detail')
 const formRef = ref() // 表单 Ref
 const customerList = ref<CustomerVO[]>([]) // 客户列表
 const accountList = ref<AccountVO[]>([]) // 账户列表
 const userList = ref<UserApi.UserVO[]>([]) // 用户列表
+
+/** 农资授信监控 */
+const selectedCustomer = computed(() => customerList.value.find(c => c.id === formData.value.customerId))
+const isOverCredit = computed(() => {
+  if (!selectedCustomer.value || !selectedCustomer.value.creditLimit) return false
+  const totalPotentialDebt = (selectedCustomer.value.currentDebt || 0) + formData.value.totalPrice
+  return totalPotentialDebt > selectedCustomer.value.creditLimit
+})
 
 /** 子表的表单 */
 const subTabsName = ref('item')
@@ -260,6 +323,10 @@ const submitForm = async () => {
       await SaleOrderApi.updateSaleOrder(data)
       message.success(t('common.updateSuccess'))
     }
+    // 农资特殊逻辑：如果是超额交易，额外提醒去财务确认
+    if (isOverCredit.value) {
+      await message.confirm('该笔交易已超出客户授信额度，建议财务/仓库确认！是否确认已处理？')
+    }
     dialogVisible.value = false
     // 发送操作成功的事件
     emit('success')
@@ -282,6 +349,10 @@ const resetForm = () => {
     discountPrice: 0,
     totalPrice: 0,
     depositPrice: 0,
+    usageIntent: undefined,
+    usageMethod: undefined,
+    dosageAdvice: undefined,
+    buyerIdCard: undefined,
     items: []
   }
   formRef.value?.resetFields()

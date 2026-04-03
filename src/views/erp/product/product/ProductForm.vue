@@ -117,6 +117,41 @@
           </el-form-item>
         </el-col>
         <el-col :span="24">
+          <el-divider content-position="left">农资扩展信息</el-divider>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="农药登记证号" prop="registrationNo">
+            <el-input v-model="formData.registrationNo" placeholder="请输入农药登记证号" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="登记证有效期" prop="registrationExpiryDate">
+            <el-date-picker
+              v-model="formData.registrationExpiryDate"
+              type="date"
+              value-format="x"
+              placeholder="选择有效期"
+              class="!w-1/1"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="标准亩用量" prop="standardDosagePerMu">
+            <el-input-number
+              v-model="formData.standardDosagePerMu"
+              placeholder="请输入标准亩用量"
+              :min="0"
+              :precision="2"
+              class="!w-1/1"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="是否高毒限用" prop="isRestricted">
+            <el-switch v-model="formData.isRestricted" active-text="是" inactive-text="否" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
           <el-form-item label="备注" prop="remark">
             <el-input type="textarea" v-model="formData.remark" placeholder="请输入备注" />
           </el-form-item>
@@ -160,7 +195,11 @@ const formData = ref({
   weight: undefined,
   purchasePrice: undefined,
   salePrice: undefined,
-  minPrice: undefined
+  minPrice: undefined,
+  registrationExpiryDate: undefined,
+  registrationNo: undefined,
+  isRestricted: false,
+  standardDosagePerMu: undefined
 })
 const formRules = reactive({
   name: [{ required: true, message: '产品名称不能为空', trigger: 'blur' }],
@@ -235,7 +274,11 @@ const resetForm = () => {
     weight: undefined,
     purchasePrice: undefined,
     salePrice: undefined,
-    minPrice: undefined
+    minPrice: undefined,
+    registrationExpiryDate: undefined,
+    registrationNo: undefined,
+    isRestricted: false,
+    standardDosagePerMu: undefined
   }
   formRef.value?.resetFields()
 }

@@ -92,6 +92,30 @@
             <el-input v-model="formData.bankAddress" placeholder="请输入开户地址" />
           </el-form-item>
         </el-col>
+        </el-col>
+        <el-col :span="24">
+          <el-divider content-position="left">农资扩展信息</el-divider>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="种植面积(亩)" prop="landArea">
+            <el-input-number v-model="formData.landArea" :min="0" :precision="2" class="!w-1/1" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="主要作物" prop="mainCrops">
+            <el-input v-model="formData.mainCrops" placeholder="请输入主要作物" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="信用额度" prop="creditLimit">
+            <el-input-number v-model="formData.creditLimit" :min="0" :precision="2" class="!w-1/1" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="当前欠款" prop="currentDebt">
+            <el-input-number v-model="formData.currentDebt" disabled :precision="2" class="!w-1/1" />
+          </el-form-item>
+        </el-col>
         <el-col :span="24">
           <el-form-item label="备注" prop="remark">
             <el-input type="textarea" v-model="formData.remark" placeholder="请输入备注" />
@@ -135,7 +159,11 @@ const formData = ref({
   taxPercent: undefined,
   bankName: undefined,
   bankAccount: undefined,
-  bankAddress: undefined
+  bankAddress: undefined,
+  landArea: undefined,
+  mainCrops: undefined,
+  creditLimit: undefined,
+  currentDebt: undefined
 })
 const formRules = reactive({
   name: [{ required: true, message: '客户名称不能为空', trigger: 'blur' }],
@@ -203,7 +231,11 @@ const resetForm = () => {
     taxPercent: undefined,
     bankName: undefined,
     bankAccount: undefined,
-    bankAddress: undefined
+    bankAddress: undefined,
+    landArea: undefined,
+    mainCrops: undefined,
+    creditLimit: undefined,
+    currentDebt: undefined
   }
   formRef.value?.resetFields()
 }

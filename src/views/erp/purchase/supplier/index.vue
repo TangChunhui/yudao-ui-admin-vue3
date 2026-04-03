@@ -69,6 +69,13 @@
       <el-table-column label="手机号码" align="center" prop="mobile" />
       <el-table-column label="联系电话" align="center" prop="telephone" />
       <el-table-column label="电子邮箱" align="center" prop="email" />
+      <el-table-column label="资质有效期" align="center" prop="licenseExpiryDate" width="120">
+        <template #default="scope">
+          <span :class="{ 'text-red-500 font-bold': scope.row.licenseExpiryDate && scope.row.licenseExpiryDate < new Date().getTime() }">
+            {{ dateFormatter(scope.row, scope.row.licenseExpiryDate, 'YYYY-MM-DD') }}
+          </span>
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="排序" align="center" prop="sort" />
       <el-table-column label="状态" align="center" prop="status">

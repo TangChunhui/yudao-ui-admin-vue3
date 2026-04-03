@@ -44,6 +44,11 @@
           end-placeholder="结束日期"
           :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
           class="!w-240px"
+          :shortcuts="[
+            { text: '今日', value: [new Date().setHours(0, 0, 0, 0), new Date().setHours(23, 59, 59, 999)] },
+            { text: '昨日', value: [new Date(Date.now() - 86400000).setHours(0, 0, 0, 0), new Date(Date.now() - 86400000).setHours(23, 59, 59, 999)] },
+            { text: '最近7日', value: [new Date(Date.now() - 604800000).setHours(0, 0, 0, 0), new Date(Date.now() - 604800000).setHours(23, 59, 59, 999)] }
+          ]"
         />
       </el-form-item>
       <el-form-item label="客户" prop="customerId">
@@ -165,7 +170,23 @@
     >
       <el-table-column width="30" label="选择" type="selection" />
       <el-table-column min-width="180" label="订单单号" align="center" prop="no" />
-      <el-table-column label="产品信息" align="center" prop="productNames" min-width="200" />
+      <el-table-column label="合规" align="center" width="80">
+        <template #default="scope">
+          <el-tooltip v-if="scope.row.buyerIdCard" :content="'购药人: ' + scope.row.buyerIdCard">
+            <el-tag type="success" size="small"><Icon icon="ep:reading" /> 已登记</el-tag>
+          </el-tooltip>
+          <el-tag v-else type="info" size="small">免登记</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="产品信息" align="left" prop="productNames" min-width="250">
+        <template #default="scope">
+          <div v-for="item in scope.row.items" :key="item.id" class="text-12px mb-2px">
+            <el-tag size="small" type="info" class="mr-4px">{{ item.productName }}</el-tag>
+            <span v-if="item.batchNo" class="text-gray-400">批次: {{ item.batchNo }}</span>
+            <span class="ml-4px">x{{ erpCountTableColumnFormatter(null, null, item.count) }}</span>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="客户" align="center" prop="customerName" />
       <el-table-column
         label="订单时间"
@@ -254,6 +275,23 @@
           </el-button>
           <el-button
             link
+            type="primary"
+            @click="handlePrint(scope.row)"
+            v-hasPermi="['erp:sale-order:query']"
+          >
+            打印
+          </el-button>
+          <el-button
+            link
+            type="success"
+            @click="handlePlayVideo(scope.row)"
+            v-if="scope.row.cameraId"
+            v-hasPermi="['erp:agri-report:query']"
+          >
+            视频
+          </el-button>
+          <el-button
+            link
             type="danger"
             @click="handleDelete([scope.row.id])"
             v-hasPermi="['erp:sale-order:delete']"
@@ -274,6 +312,32 @@
 
   <!-- 表单弹窗：添加/修改 -->
   <SaleOrderForm ref="formRef" @success="getList" />
+
+  <!-- 打印弹窗 (农资版) -->
+  <SaleCompliancePrint ref="printRef" />
+
+  <!-- 视频回放弹窗 -->
+  <Dialog v-model="videoVisible" title="监控视频回放 (Seetong)" width="800px">
+    <div class="flex justify-center flex-col items-center">
+      <video
+        v-if="videoUrl"
+        ref="videoPlayer"
+        :src="videoUrl"
+        controls
+        autoplay
+        class="w-full max-h-450px bg-black"
+      >
+        您的浏览器不支持视频播放。
+      </video>
+      <div v-else class="h-300px flex items-center justify-center text-gray-400">
+        <Icon icon="ep:video-play" :size="40" class="mb-10px" />
+        <span>正在获取视频流...</span>
+      </div>
+      <div class="mt-15px text-14px text-gray-500">
+        设备 ID: {{ currentCameraId }} | 业务时间: {{ currentOrderTime }}
+      </div>
+    </div>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -287,6 +351,9 @@ import { UserVO } from '@/api/system/user'
 import * as UserApi from '@/api/system/user'
 import { erpCountTableColumnFormatter, erpPriceTableColumnFormatter } from '@/utils'
 import { CustomerApi, CustomerVO } from '@/api/erp/sale/customer'
+import SaleCompliancePrint from './components/SaleCompliancePrint.vue'
+import { AgriReportApi } from '@/api/erp/agri/report'
+import { dateFormatter } from '@/utils/formatTime'
 
 /** ERP 销售订单列表 */
 defineOptions({ name: 'ErpSaleOrder' })
@@ -402,6 +469,45 @@ onMounted(async () => {
   customerList.value = await CustomerApi.getCustomerSimpleList()
   userList.value = await UserApi.getSimpleUserList()
 })
-// TODO 芋艿：可优化功能：列表界面，支持导入
-// TODO 芋艿：可优化功能：详情界面，支持打印
+
+/** 打印销售单 (农资合规版) */
+const printRef = ref()
+const handlePrint = async (row: any) => {
+  // 确保有 items 数据 (如果列表没带 items，则额外查询一次)
+  if (!row.items || row.items.length === 0) {
+    const data = await SaleOrderApi.getSaleOrder(row.id)
+    printRef.value.open(data)
+  } else {
+    printRef.value.open(row)
+  }
+}
+
+/** 视频回放相关 */
+const videoVisible = ref(false)
+const videoUrl = ref('')
+const currentCameraId = ref('')
+const currentOrderTime = ref('')
+const handlePlayVideo = async (row: SaleOrderVO) => {
+  currentCameraId.value = row.cameraId
+  currentOrderTime.value = dateFormatter(null, null, row.orderTime)
+  videoUrl.value = ''
+  videoVisible.value = true
+  try {
+    // 优先使用已抓取的本地/云端视频
+    if (row.videoUrl) {
+      videoUrl.value = row.videoUrl
+      return
+    }
+    // 否则动态获取回放地址
+    // 默认使用后端配置的分钟数
+    videoUrl.value = await AgriReportApi.getPlaybackUrl(row.id, 'sale_order')
+    if (!videoUrl.value) {
+      message.error('无法获取该时段的监控回放，请检查设备连通性或云存储状态')
+      videoVisible.value = false
+    }
+  } catch (e) {
+    console.error(e)
+    videoVisible.value = false
+  }
+}
 </script>

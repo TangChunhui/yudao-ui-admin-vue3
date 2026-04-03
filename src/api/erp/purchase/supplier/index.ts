@@ -17,6 +17,9 @@ export interface SupplierVO {
   bankName: string // 开户行
   bankAccount: string // 开户账号
   bankAddress: string // 开户地址
+  businessLicenseNo: string // 经营许可证号
+  licenseExpiryDate: Date // 许可证有效期
+  licenseFileUrl: string // 资质附件URL
 }
 
 // ERP 供应商 API
