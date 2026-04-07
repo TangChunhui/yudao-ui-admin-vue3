@@ -142,7 +142,8 @@ const loadProducts = async () => {
   productList.value = data.list.map(i => ({
     id: i.id,
     name: i.name,
-    price: i.minPrice,
+    price: i.salePrice || i.minPrice || 0,
+    unitId: i.unitId,
     standard: i.standard,
     isRestricted: i.isRestricted,
     stockCount: i.stockCount || 0,
@@ -198,15 +199,21 @@ const submit = async () => {
   if (cart.value.length === 0) return
   
   try {
-    await ElMessageBox.confirm(`确认收到 ${totalAmount.value} 元？(夫/妻一键结账)`, '收银确认')
+    await ElMessageBox.confirm(`确认收到 ¥${totalAmount.value.toFixed(2)}？`, '收银确认')
     const orderData = {
-      customerId: customerId.value,
-      items: cart.value.map(i => ({ productId: i.id, count: i.count })),
+      customerId: customerId.value || 1, // 默认散客 ID=1
+      orderTime: new Date().getTime(),
+      discountPercent: 0,
+      items: cart.value.map(i => ({ productId: i.id, productUnitId: i.unitId, count: i.count, productPrice: i.price })),
       remark: '快速收银订单',
       cashierId: cashierId.value,
       cameraId: cameraId.value || undefined
     }
-    await SaleOrderApi.createSaleOrder(orderData as any)
+    const orderId = await SaleOrderApi.createSaleOrder(orderData as any)
+    // 快速收银场景：自动审批
+    if (orderId) {
+      try { await SaleOrderApi.updateSaleOrderStatus(orderId as any, 20) } catch (_) {}
+    }
     ElMessage.success('收银成功！')
     cart.value = []
     customerId.value = null
