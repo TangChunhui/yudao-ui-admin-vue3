@@ -105,12 +105,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ProductApi } from '@/api/erp/product/product'
 import { CustomerApi } from '@/api/erp/sale/customer'
 import { SaleOrderApi } from '@/api/erp/sale/order'
 import { AgriReportApi } from '@/api/erp/agri/report'
+
+defineOptions({ name: 'AgriCashier' })
 
 const scanInputRef = ref()
 const productSearch = ref('')
