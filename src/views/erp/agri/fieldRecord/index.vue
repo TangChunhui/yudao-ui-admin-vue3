@@ -38,6 +38,8 @@
 import { ref, onMounted } from 'vue'
 import { AgriFieldApi, AgriFieldRecordVO } from '@/api/erp/agri/field'
 
+defineOptions({ name: 'AgriFieldRecord' })
+
 const loading = ref(true)
 const total = ref(0)
 const list = ref<AgriFieldRecordVO[]>([])

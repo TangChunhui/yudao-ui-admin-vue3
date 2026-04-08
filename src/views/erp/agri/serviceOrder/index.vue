@@ -72,6 +72,8 @@ import { AgriServiceOrderApi, AgriServiceOrderVO } from '@/api/erp/agri/serviceO
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ServiceOrderForm from './ServiceOrderForm.vue'
 
+defineOptions({ name: 'AgriServiceOrder' })
+
 const loading = ref(true)
 const total = ref(0)
 const list = ref<AgriServiceOrderVO[]>([])
