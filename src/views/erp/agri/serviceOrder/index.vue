@@ -43,10 +43,16 @@
           <el-tag type="success" v-else-if="scope.row.status === 2">已完成</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="需求面积/量" align="center" prop="serviceArea" />
-      <el-table-column label="期待日期" align="center" prop="expectDate" width="180"/>
-      <el-table-column label="联系人" align="center" prop="contactName" />
-      <el-table-column label="联系电话" align="center" prop="contactMobile" />
+      <el-table-column label="需求面积/量" align="center" prop="serviceArea" width="110" />
+      <el-table-column label="服务地址" align="center" prop="address" min-width="130" show-overflow-tooltip />
+      <el-table-column label="期望日期" align="center" prop="expectDate" width="115">
+        <template #default="scope">{{ formatDate(scope.row.expectDate, 'YYYY-MM-DD') }}</template>
+      </el-table-column>
+      <el-table-column label="联系人" align="center" prop="contactName" width="90" />
+      <el-table-column label="联系电话" align="center" prop="contactMobile" width="120" />
+      <el-table-column label="提交时间" align="center" prop="createTime" width="160">
+        <template #default="scope">{{ formatDate(scope.row.createTime) }}</template>
+      </el-table-column>
       <el-table-column label="操作" align="center" width="150" fixed="right">
         <template #default="scope">
           <el-button link type="primary" @click="openForm(scope.row)">派单处理</el-button>
@@ -70,6 +76,7 @@
 import { ref, onMounted } from 'vue'
 import { AgriServiceOrderApi, AgriServiceOrderVO } from '@/api/erp/agri/serviceOrder'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDate } from '@/utils/formatTime'
 import ServiceOrderForm from './ServiceOrderForm.vue'
 
 defineOptions({ name: 'AgriServiceOrder' })

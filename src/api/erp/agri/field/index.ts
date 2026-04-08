@@ -8,7 +8,7 @@ export interface AgriFieldVO {
   location: string
   crop: string
   soilType: string
-  sowDate: string
+  sowDate: number
   growthStage: string
   remark: string
   createTime: Date
@@ -21,7 +21,7 @@ export interface AgriFieldRecordVO {
   type: string
   product: string
   dosage: string
-  operateDate: string
+  operateDate: number
   remark: string
 }
 

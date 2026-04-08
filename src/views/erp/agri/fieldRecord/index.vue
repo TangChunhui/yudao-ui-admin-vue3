@@ -22,7 +22,9 @@
       <el-table-column label="农事类型" align="center" prop="type" />
       <el-table-column label="产品" align="center" prop="product" />
       <el-table-column label="用量" align="center" prop="dosage" />
-      <el-table-column label="作业日期" align="center" prop="operateDate" />
+      <el-table-column label="作业日期" align="center" prop="operateDate" width="120">
+        <template #default="scope">{{ formatDate(scope.row.operateDate, 'YYYY-MM-DD') }}</template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
     </el-table>
     <Pagination
@@ -37,6 +39,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { AgriFieldApi, AgriFieldRecordVO } from '@/api/erp/agri/field'
+import { formatDate } from '@/utils/formatTime'
 
 defineOptions({ name: 'AgriFieldRecord' })
 

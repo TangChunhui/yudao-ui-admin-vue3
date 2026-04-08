@@ -7,7 +7,7 @@ export interface AgriServiceOrderVO {
   status: number
   fieldId: number
   serviceArea: number
-  expectDate: string
+  expectDate: number
   contactName: string
   contactMobile: string
   address: string

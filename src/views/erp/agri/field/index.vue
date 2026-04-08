@@ -42,7 +42,9 @@
       <el-table-column label="位置" align="center" prop="location" />
       <el-table-column label="当前作物" align="center" prop="crop" />
       <el-table-column label="土壤类型" align="center" prop="soilType" />
-      <el-table-column label="播种日期" align="center" prop="sowDate" width="120" />
+      <el-table-column label="播种日期" align="center" prop="sowDate" width="120">
+        <template #default="scope">{{ formatDate(scope.row.sowDate, 'YYYY-MM-DD') }}</template>
+      </el-table-column>
       <el-table-column label="生长阶段" align="center" prop="growthStage" />
       <el-table-column label="操作" align="center" width="120">
         <template #default="scope">
@@ -82,7 +84,7 @@
           v-model="formData.sowDate"
           type="date"
           placeholder="请选择播种日期"
-          value-format="YYYY-MM-DD"
+          value-format="x"
           class="!w-full"
         />
       </el-form-item>
@@ -104,6 +106,7 @@
 import { ref, onMounted } from 'vue'
 import { AgriFieldApi, AgriFieldVO } from '@/api/erp/agri/field'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDate } from '@/utils/formatTime'
 
 defineOptions({ name: 'AgriField' })
 
