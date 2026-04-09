@@ -43,7 +43,12 @@
           <el-tag type="success" v-else-if="scope.row.status === 2">已完成</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="需求面积/量" align="center" prop="serviceArea" width="110" />
+      <el-table-column label="需求面积/量" align="center" prop="serviceArea" width="110">
+        <template #default="scope">
+          {{ scope.row.serviceArea }}
+          <span class="text-gray-400 text-12px">{{ scope.row.serviceType === 'drying' ? '吨' : '亩' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="服务地址" align="center" prop="address" min-width="130" show-overflow-tooltip />
       <el-table-column label="期望日期" align="center" prop="expectDate" width="115">
         <template #default="scope">{{ formatDate(scope.row.expectDate, 'YYYY-MM-DD') }}</template>

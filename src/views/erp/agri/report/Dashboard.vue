@@ -80,7 +80,7 @@
                 <Icon icon="ep:warning" color="#F56C6C" class="mr-8px" />
                 <span class="font-bold">临期库存自动预警 - 优先去仓 (FIFO)</span>
               </div>
-              <el-button type="primary" link @click="router.push({ name: 'ErpAgriStockBalance' })">查看完整台账</el-button>
+              <el-button type="primary" link @click="router.push({ name: 'AgriStockBalanceReport' })">查看完整台账</el-button>
             </div>
           </template>
           <el-table :data="expiringList" stripe style="width: 100%" v-loading="loading" height="300">
@@ -246,12 +246,12 @@ const fastActions = [
     route: 'AgriStockBalanceReport'
   },
   {
-    name: '视频中心',
-    desc: '监控调取与归档查看',
-    icon: 'ep:video-camera',
+    name: '限用台账',
+    desc: '高毒限用农药电子台账',
+    icon: 'ep:warning',
     color: '#F56C6C',
     bg: '#fef0f0',
-    route: 'ErpAgriDashboard'
+    route: 'RestrictedSaleReport'
   }
 ]
 

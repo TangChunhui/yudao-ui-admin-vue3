@@ -37,7 +37,10 @@
         <el-button @click="resetQuery">
           <Icon icon="ep:refresh" /> 重置
         </el-button>
-        <el-button type="success" plain @click="handleExport" :loading="exportLoading">
+        <el-button
+          v-if="activeTab === 'purchase' || activeTab === 'sales'"
+          type="success" plain @click="handleExport" :loading="exportLoading"
+        >
           <Icon icon="ep:download" /> 导出台账
         </el-button>
       </el-form-item>
@@ -296,9 +299,6 @@ const handleExport = async () => {
     if (activeTab.value === 'purchase') {
       await AgriReportApi.exportPurchaseLedgerExcel(params)
     } else if (activeTab.value === 'sales') {
-      await AgriReportApi.exportSalesDetailExcel(params)
-    } else if (activeTab.value === 'stockBalance') {
-      // 收发存台账暂无专用导出接口，提示后续扩展
       await AgriReportApi.exportSalesDetailExcel(params)
     }
   } finally {
